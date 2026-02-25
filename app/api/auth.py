@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.core.dependency import get_user_service
-from app.schema.auth import RegisterOut, RegisterIn, LoginIn, LoginOut, VerifyEmailIn, VerifyEmailOut
+from app.schema.auth import RegisterOut, RegisterIn, LoginIn, LoginOut, VerifyEmailIn, VerifyEmailOut, RefreshIn
 from app.service.user import UserService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -29,3 +29,11 @@ async def login(
     service: UserService = Depends(get_user_service)
 ) -> LoginOut:
     return await service.login(payload)
+
+
+@router.post("/refresh", response_model=LoginOut)
+async def refresh(
+    payload: RefreshIn,
+    service: UserService = Depends(get_user_service)
+) -> LoginOut:
+    return await service.refresh_tokens(payload)

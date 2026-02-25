@@ -72,6 +72,14 @@ def decode_access_token(token: str) -> dict:
         raise e
 
 
+def decode_refresh_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(token, settings.jwt.secret, algorithms=[settings.jwt.algorithm])
+        if payload.get("typ") != "refresh":
+            raise JWTError("Invalid token type")
+        return payload
+    except JWTError:
+        raise InvalidCredentialsError()
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

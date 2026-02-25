@@ -24,3 +24,7 @@ class LoginIn(EmailMixin, PasswordMixin):
 
 class LoginOut(TokenMixin):
     pass
+
+
+class RefreshIn(BaseModel):
+    refresh_token: str = "Refresh токен"
