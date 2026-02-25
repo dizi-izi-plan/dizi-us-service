@@ -1,7 +1,15 @@
 from fastapi import APIRouter, Depends
 
 from app.core.dependency import get_user_service
-from app.schema.auth import RegisterOut, RegisterIn, LoginIn, LoginOut, VerifyEmailIn, VerifyEmailOut, RefreshIn
+from app.schema.auth import (
+    RegisterOut,
+    RegisterIn,
+    LoginIn,
+    LoginOut,
+    VerifyEmailIn,
+    VerifyEmailOut,
+    RefreshIn
+)
 from app.service.user import UserService
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])

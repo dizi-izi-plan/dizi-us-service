@@ -3,6 +3,7 @@ import aiosmtplib
 from app.core.config import settings
 from app.core.logger import logger
 
+
 class MailService:
 
     @staticmethod
@@ -26,5 +27,6 @@ class MailService:
         except Exception as e:
             logger.error(f"Failed to send email to {recipient}: {e}")
             raise e
+
 
 mail_service = MailService()

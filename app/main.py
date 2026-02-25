@@ -1,15 +1,18 @@
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse
 from starlette.responses import JSONResponse
 
-from app.core.logger import setup_logging, logger
+from app.api.auth import router as auth_router
 from app.core.config import settings
 from app.core.error import AppBaseError
-from app.api.auth import router as auth_router
-from app.core.redis_conf import redis_service, broker
+from app.core.logger import logger, setup_logging
+from app.core.redis_conf import broker, redis_service
 
 setup_logging()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -21,6 +24,7 @@ async def lifespan(app: FastAPI):
     if not broker.is_worker_process:
         await broker.shutdown()
 
+
 app = FastAPI(title="Dizi US Service", lifespan=lifespan)
 
 app.add_middleware(
@@ -31,6 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 @app.exception_handler(AppBaseError)
 async def app_base_error_handler(request: Request, exc: AppBaseError):
     error_data = exc.http()
@@ -40,7 +45,14 @@ async def app_base_error_handler(request: Request, exc: AppBaseError):
         content={"error": error_data.detail}
     )
 
+
+@app.get("/", include_in_schema=False)
+async def root_redirect():
+    return RedirectResponse(url="/docs")
+
+
 app.include_router(auth_router, prefix=settings.api.prefix)
+
 
 @app.get("/health")
 async def health():

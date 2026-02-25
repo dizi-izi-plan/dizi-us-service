@@ -1,0 +1,36 @@
+[flake8]
+# Основные настройки
+max-line-length = 88
+max-complexity = 10
+count = True
+statistics = True
+show-source = True
+
+# Исключения (папки, которые не нужно проверять)
+exclude =
+    .git,
+    __pycache__,
+    build,
+    dist,
+    venv,
+    .venv,
+    migrations,
+    alembic,
+    env
+
+# Настройки игнорирования специфических ошибок
+# E203: Whitespace before ':' (несовместимо с Black)
+# W503: Line break occurred before a binary operator (устарело, заменено на W504)
+ignore = E203, W503
+
+# Настройка для плагинов (если установлены)
+# Плагин flake8-import-order помогает держать импорты в чистоте
+import-order-style = pycharm
+application-import-names = app
+
+# Конкретные файлы
+per-file-ignores =
+    # Разрешаем неиспользуемые импорты в __init__ файлах (для регистрации моделей)
+    __init__.py: F401
+    # В тестах разрешаем использование assert и длинные строки
+    tests/*: S101, E501

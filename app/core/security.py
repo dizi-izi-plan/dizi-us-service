@@ -12,7 +12,7 @@ from app.core.config import settings
 from jose import jwt, JWTError, ExpiredSignatureError
 
 from app.schema.mixin import UserIdMixin
-from app.core.error import InvalidCredentialsError
+from app.core.error import InvalidCredentialsError, InvalidTokenError, TokenExpiredError
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
 
@@ -62,24 +62,35 @@ def create_token_pair(user_id: str) -> LoginOut:
 
 def decode_access_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, settings.jwt.secret, algorithms=[settings.jwt.algorithm])
+        payload = jwt.decode(
+            token=token,
+            key=settings.jwt.secret,
+            algorithms=[settings.jwt.algorithm]
+        )
         if payload.get("typ") != "access":
-            raise JWTError("wrong token type")
+            raise InvalidTokenError()
         return payload
-    except ExpiredSignatureError as e:
-        raise e
-    except JWTError as e:
-        raise e
+    except ExpiredSignatureError:
+        raise TokenExpiredError()
+    except JWTError:
+        raise InvalidTokenError()
 
 
 def decode_refresh_token(token: str) -> dict:
     try:
-        payload = jwt.decode(token, settings.jwt.secret, algorithms=[settings.jwt.algorithm])
+        payload = jwt.decode(
+            token=token,
+            key=settings.jwt.secret,
+            algorithms=[settings.jwt.algorithm]
+        )
         if payload.get("typ") != "refresh":
-            raise JWTError("Invalid token type")
+            raise InvalidTokenError()
         return payload
+    except ExpiredSignatureError:
+        raise TokenExpiredError()
     except JWTError:
-        raise InvalidCredentialsError()
+        raise InvalidTokenError()
+
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),

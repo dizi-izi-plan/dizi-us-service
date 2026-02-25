@@ -21,6 +21,17 @@ class InvalidCredentialsError(AppBaseError):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Неверный логин или пароль"
 
+
 class InvalidVerificationCodeError(AppBaseError):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "Неверный код подтверждения"
+
+
+class TokenExpiredError(AppBaseError):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Срок действия токена истек"
+
+
+class InvalidTokenError(AppBaseError):
+    status_code = status.HTTP_401_UNAUTHORIZED
+    detail = "Невалидный токен"

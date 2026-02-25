@@ -7,7 +7,7 @@ class RegisterIn(EmailMixin, PasswordMixin):
 
 
 class RegisterOut(BaseModel):
-    message: str = "Пользователь зарегистрирован"
+    message: str = "Письмо для подтверждения почты отправлено"
 
 
 class VerifyEmailIn(EmailMixin, CodeMixin):
