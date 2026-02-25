@@ -1,0 +1,45 @@
+
+services:
+  db:
+    image: postgres:17
+    container_name: dizi_db
+    environment:
+      POSTGRES_USER: ${DB__USER}
+      POSTGRES_PASSWORD: ${DB__PASSWORD}
+      POSTGRES_DB: ${DB__NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5438:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: dizi_redis
+    ports:
+      - "6379:6379"
+
+  api:
+    build: .
+    container_name: dizi_api
+    volumes:
+      - .:/app
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+
+  worker:
+    build: .
+    container_name: dizi_worker
+    depends_on:
+      - api
+      - redis
+    env_file:
+      - .env
+    command: taskiq worker app.core.redis_conf:broker app.tasks.worker --reload
+
+volumes:
+  postgres_data:
