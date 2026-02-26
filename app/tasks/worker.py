@@ -33,12 +33,23 @@ async def confirm_email_task(email: EmailStr):
             logger.info(f"V1: User {email} confirmed")
 
             user = await user_repo.get_by_email(email)
-
             if user:
                 subscription = await sub_repo.create_free_subscription(user.id)
 
                 if subscription:
                     logger.info(f"V1: Free subscription assigned to {email}")
+
+                    delay_seconds = int(
+                        (subscription.end_date - subscription.start_date).total_seconds()
+                    )
+
+                    await deactivate_subscription_task.kiq(
+                        str(subscription.id)
+                    ).send_with_delay(delay=delay_seconds)
+
+                    logger.info(
+                        f"V1: Deactivation scheduled in {delay_seconds}s for sub {subscription.id}"
+                    )
 
                     await mail_service.send_subscription_activation(
                         recipient=email,
