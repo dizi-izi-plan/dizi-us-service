@@ -13,7 +13,8 @@ from app.schema.auth import (
     LoginOut,
     VerifyEmailIn,
     VerifyEmailOut,
-    RefreshIn, VerifyEmailV2In
+    RefreshIn,
+    VerifyEmailV2In
 )
 from app.core.error import (
     UserAlreadyExistsError,
@@ -86,7 +87,7 @@ class UserService:
 
         await confirm_email_task_v2.kiq(user_id)
 
-        return VerifyEmailOut(message="Email успешно подтвержден")
+        return VerifyEmailOut()
 
     async def login(self, data: LoginIn) -> LoginOut:
         user = await self.repo.get_by_email(data.email)

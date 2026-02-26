@@ -35,3 +35,13 @@ class TokenExpiredError(AppBaseError):
 class InvalidTokenError(AppBaseError):
     status_code = status.HTTP_401_UNAUTHORIZED
     detail = "Невалидный токен"
+
+
+class TariffNotFound(AppBaseError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Такого тарифа не существует"
+
+
+class SubscriptionNotFoundError(AppBaseError):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "У вас нет активной подписки"

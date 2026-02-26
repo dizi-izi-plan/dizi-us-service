@@ -1,3 +1,4 @@
+import datetime
 import email.message
 import aiosmtplib
 from app.core.config import settings
@@ -41,6 +42,29 @@ class MailService:
         message.set_content(
             f"Для подтверждения регистрации перейдите по ссылке:\n\n{url}"
         )
+
+        await self._send_mail(message, recipient)
+
+    async def send_subscription_activation(
+            self,
+            recipient: str,
+            tariff_name: str,
+            end_date: datetime.datetime
+    ):
+        formatted_date = end_date.strftime("%d.%m.%Y")
+        message = email.message.EmailMessage()
+        message["From"] = settings.mail.username
+        message["To"] = recipient
+        message["Subject"] = "Подписка активирована"
+
+        content = (
+            f"Здравствуйте!\n\n"
+            f"Ваша подписка по тарифу «{tariff_name}» "
+            f"активирована и действует с текущего момента.\n"
+            f"Дата окончания действия: {formatted_date}.\n\n"
+            f"Спасибо, что выбрали наш сервис!"
+        )
+        message.set_content(content)
 
         await self._send_mail(message, recipient)
 
