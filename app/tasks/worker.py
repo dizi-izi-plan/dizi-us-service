@@ -6,6 +6,7 @@ from app.core.redis_conf import broker, redis_service
 from app.core.logger import get_logger
 from app.core.security import create_verification_token
 from app.database.db import new_session
+from app.repo.subscription import SubscriptionRepository
 from app.repo.user import UserRepository
 from app.service.mail import mail_service
 
@@ -25,10 +26,27 @@ async def confirm_email_task(email: EmailStr):
     await redis_service.delete(f"auth:code:{email}")
 
     async with new_session() as session:
-        repo = UserRepository(session)
-        if await repo.confirm_user_by_email(email):
-            await redis_service.delete(f"auth:code:{email}")
+        user_repo = UserRepository(session)
+        sub_repo = SubscriptionRepository(session)
+
+        if await user_repo.confirm_user_by_email(email):
             logger.info(f"V1: User {email} confirmed")
+
+            user = await user_repo.get_by_email(email)
+
+            if user:
+                subscription = await sub_repo.create_free_subscription(user.id)
+
+                if subscription:
+                    logger.info(f"V1: Free subscription assigned to {email}")
+
+                    await mail_service.send_subscription_activation(
+                        recipient=email,
+                        tariff_name="Бесплатный",
+                        end_date=subscription.end_date
+                    )
+                else:
+                    logger.error(f"V1: Failed to assign free subscription for {email}")
         else:
             logger.error(f"V1: User {email} not found")
 
@@ -44,9 +62,28 @@ async def send_verification_email_v2(email: EmailStr, user_id: uuid.UUID):
 
 @broker.task(task_name="confirm_email_task_v2")
 async def confirm_email_task_v2(user_id: str):
+    user_uuid = uuid.UUID(user_id)
+
     async with new_session() as session:
-        repo = UserRepository(session)
-        if await repo.confirm_user_by_id(user_id):
+        user_repo = UserRepository(session)
+        sub_repo = SubscriptionRepository(session)
+
+        if await user_repo.confirm_user_by_id(user_uuid):
             logger.info(f"V2: User ID {user_id} confirmed")
+
+            subscription = await sub_repo.create_free_subscription(user_uuid)
+
+            if subscription:
+                logger.info(f"V2: Free subscription assigned to User {user_id}")
+
+                user = await user_repo.get_by_id(user_uuid)
+
+                await mail_service.send_subscription_activation(
+                    recipient=user.email,
+                    tariff_name="Бесплатный",
+                    end_date=subscription.end_date
+                )
+            else:
+                logger.error("V2: Tariff 'Бесплатный' not found in database")
         else:
             logger.error(f"V2: User ID {user_id} not found")
