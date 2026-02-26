@@ -5,13 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from starlette.responses import JSONResponse
 
-from app.api.auth import router as auth_router
-from app.core.config import settings
+from app.api.v1 import v1_router
+from app.api.v2 import v2_router
 from app.core.error import AppBaseError
-from app.core.logger import logger, setup_logging
+from app.core.logger import setup_logging, get_logger
 from app.core.redis_conf import broker, redis_service
 
 setup_logging()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager
@@ -51,7 +52,8 @@ async def root_redirect():
     return RedirectResponse(url="/docs")
 
 
-app.include_router(auth_router, prefix=settings.api.prefix)
+app.include_router(v1_router, prefix="/api/v1")
+app.include_router(v2_router, prefix="/api/v2")
 
 
 @app.get("/health")

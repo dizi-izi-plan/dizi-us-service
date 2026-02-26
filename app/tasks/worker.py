@@ -3,39 +3,50 @@ import uuid
 from pydantic import EmailStr
 
 from app.core.redis_conf import broker, redis_service
-from app.core.logger import logger
+from app.core.logger import get_logger
+from app.core.security import create_verification_token
 from app.database.db import new_session
 from app.repo.user import UserRepository
 from app.service.mail import mail_service
 
+logger = get_logger(__name__)
+
 
 @broker.task(task_name="send_verification_email")
-async def send_verification_email(email: EmailStr, user_id: uuid.UUID):
-    logger.info(f"Processing verification for user {user_id}")
-
-    # 1. Генерация и сохранение кода в Redis
+async def send_verification_email(email: EmailStr):
     code = str(random.randint(100000, 999999))
     await redis_service.set_verification_code(email, code)
-
-    # 2. Отправка письма
     await mail_service.send_verification_code(email, code)
-
-    logger.info(f"Verification process completed for {email}")
+    logger.info(f"V1: Verification code sent to {email}")
 
 
 @broker.task(task_name="confirm_email_task")
 async def confirm_email_task(email: EmailStr):
-    # 1. Удаление кода из кеша
     await redis_service.delete(f"auth:code:{email}")
 
-    # 2. Обновление статуса в БД
     async with new_session() as session:
         repo = UserRepository(session)
-        user = await repo.get_by_email(email)
-
-        if user:
-            user.confirmed = True
-            await session.commit()
-            logger.info(f"User {email} confirmed")
+        if await repo.confirm_user_by_email(email):
+            await redis_service.delete(f"auth:code:{email}")
+            logger.info(f"V1: User {email} confirmed")
         else:
-            logger.error(f"User {email} not found for confirmation")
+            logger.error(f"V1: User {email} not found")
+
+
+@broker.task(task_name="send_verification_email_v2")
+async def send_verification_email_v2(email: EmailStr, user_id: uuid.UUID):
+    token = create_verification_token(str(user_id))
+    verification_url = f"http://localhost/api/v2/auth/verify?token={token}"
+
+    await mail_service.send_verification_link(email, verification_url)
+    logger.info(f"V2: Verification link sent to {email}")
+
+
+@broker.task(task_name="confirm_email_task_v2")
+async def confirm_email_task_v2(user_id: str):
+    async with new_session() as session:
+        repo = UserRepository(session)
+        if await repo.confirm_user_by_id(user_id):
+            logger.info(f"V2: User ID {user_id} confirmed")
+        else:
+            logger.error(f"V2: User ID {user_id} not found")

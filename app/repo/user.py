@@ -27,3 +27,24 @@ class UserRepository:
         await self.session.commit()
         await self.session.refresh(user)
         return user
+
+    async def confirm_user_by_email(self, email: EmailStr) -> bool:
+        result = await self.session.execute(select(User).where(User.email == email))
+        user = result.scalar_one_or_none()
+        if user:
+            user.confirmed = True
+            await self.session.commit()
+            return True
+        return False
+
+    async def confirm_user_by_id(self, user_id: uuid.UUID | str) -> bool:
+        if isinstance(user_id, str):
+            user_id = uuid.UUID(user_id)
+
+        result = await self.session.execute(select(User).where(User.id == user_id))
+        user = result.scalar_one_or_none()
+        if user:
+            user.confirmed = True
+            await self.session.commit()
+            return True
+        return False
