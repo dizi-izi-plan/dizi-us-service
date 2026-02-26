@@ -18,5 +18,5 @@ def setup_logging():
     logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
 
-# Создаем объект логгера для импорта в другие файлы
-logger = logging.getLogger("app")
+def get_logger(name: str):
+    return logging.getLogger(name)
