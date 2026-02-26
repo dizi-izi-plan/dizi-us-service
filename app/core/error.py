@@ -45,3 +45,8 @@ class TariffNotFound(AppBaseError):
 class SubscriptionNotFoundError(AppBaseError):
     status_code = status.HTTP_404_NOT_FOUND
     detail = "У вас нет активной подписки"
+
+
+class ExternalAuthError(AppBaseError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    detail = "Ошибка аутентификации через внешний сервис"

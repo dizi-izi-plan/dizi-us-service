@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from app.schema.mixin import EmailMixin, PasswordMixin, CodeMixin, TokenMixin
 
 
@@ -32,3 +32,13 @@ class RefreshIn(BaseModel):
 
 class VerifyEmailV2In(BaseModel):
     token: str
+
+
+class GoogleAuthLink(BaseModel):
+    url: str
+
+
+class GoogleUserSchema(BaseModel):
+    email: EmailStr
+    sub: str
+    email_verified: bool = False
