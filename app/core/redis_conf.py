@@ -5,7 +5,9 @@ import redis.asyncio as aioredis
 from taskiq_redis import ListQueueBroker, RedisAsyncResultBackend
 
 from app.core.config import settings
-from app.core.logger import logger
+from app.core.logger import get_logger
+
+logger = get_logger(__name__)
 
 broker = ListQueueBroker(settings.redis.broker_url)
 result_backend = RedisAsyncResultBackend(settings.redis.result_backend_url)
@@ -31,7 +33,7 @@ class RedisService:
     async def set(self, key: str, value: Any, expire: int = 300) -> None:
         if not self.client:
             await self.init()
-        # Если значение не строка, конвертируем в JSON
+
         data = json.dumps(value) if not isinstance(value, str) else value
         await self.client.set(key, data, ex=expire)
 

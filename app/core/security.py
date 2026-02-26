@@ -107,3 +107,22 @@ async def get_current_user(
         raise InvalidCredentialsError()
 
     return UserIdMixin.model_validate(user.id)
+
+
+def create_verification_token(user_id: str) -> str:
+    return _create_token(
+        {"sub": user_id, "typ": "email_confirmation"},
+        timedelta(hours=24)
+    )
+
+
+def decode_verification_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token, settings.jwt.secret, algorithms=[settings.jwt.algorithm]
+        )
+        if payload.get("typ") != "email_confirmation":
+            raise InvalidTokenError()
+        return payload
+    except (JWTError, ExpiredSignatureError):
+        raise InvalidTokenError()

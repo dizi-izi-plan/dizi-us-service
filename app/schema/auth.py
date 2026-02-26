@@ -7,7 +7,7 @@ class RegisterIn(EmailMixin, PasswordMixin):
 
 
 class RegisterOut(BaseModel):
-    message: str = "Письмо для подтверждения почты отправлено"
+    message: str = "Письмо для подтверждения отправлена на почту"
 
 
 class VerifyEmailIn(EmailMixin, CodeMixin):
@@ -28,3 +28,7 @@ class LoginOut(TokenMixin):
 
 class RefreshIn(BaseModel):
     refresh_token: str = "Refresh токен"
+
+
+class VerifyEmailV2In(BaseModel):
+    token: str
