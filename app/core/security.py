@@ -106,7 +106,7 @@ async def get_current_user(
     if not user:
         raise InvalidCredentialsError()
 
-    return UserIdMixin.model_validate(user.id)
+    return UserIdMixin(id=user.id)
 
 
 def create_verification_token(user_id: str) -> str:
