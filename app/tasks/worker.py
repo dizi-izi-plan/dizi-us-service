@@ -76,14 +76,32 @@ async def confirm_email_task_v2(user_id: str):
             if subscription:
                 logger.info(f"V2: Free subscription assigned to User {user_id}")
 
-                user = await user_repo.get_by_id(user_uuid)
-
-                await mail_service.send_subscription_activation(
-                    recipient=user.email,
-                    tariff_name="Бесплатный",
-                    end_date=subscription.end_date
+                # Планируем автоматическую деактивацию подписки
+                delay_seconds = int((subscription.end_date - subscription.start_date).total_seconds())
+                await deactivate_subscription_task.kiq(str(subscription.id)).send_with_delay(
+                    delay=delay_seconds
                 )
+                logger.info(f"V2: Deactivation task scheduled in {delay_seconds}s for sub {subscription.id}")
+
+                user = await user_repo.get_by_id(user_uuid)
+                if user and user.email:
+                    await mail_service.send_subscription_activation(
+                        recipient=user.email,
+                        tariff_name="Бесплатный",
+                        end_date=subscription.end_date
+                    )
             else:
                 logger.error("V2: Tariff 'Бесплатный' not found in database")
         else:
             logger.error(f"V2: User ID {user_id} not found")
+
+
+@broker.task(task_name="deactivate_subscription_task")
+async def deactivate_subscription_task(subscription_id: str):
+    async with new_session() as session:
+        sub_repo = SubscriptionRepository(session)
+
+        if await sub_repo.deactivate_subscription(subscription_id):
+            logger.info(f"Subscription {subscription_id} has been deactivated by timeout")
+        else:
+            logger.warning(f"Subscription {subscription_id} not found or already inactive")

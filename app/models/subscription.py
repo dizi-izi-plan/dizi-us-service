@@ -1,6 +1,6 @@
 import uuid
 import datetime
-from sqlalchemy import ForeignKey, Boolean, UniqueConstraint
+from sqlalchemy import ForeignKey, Boolean, UniqueConstraint, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.db import Base
@@ -29,10 +29,12 @@ class Subscription(Base):
     )
 
     start_date: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
         nullable=False
     )
 
     end_date: Mapped[datetime.datetime] = mapped_column(
+        DateTime(timezone=True),
         nullable=False
     )
 

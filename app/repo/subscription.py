@@ -1,7 +1,9 @@
 import uuid
 import datetime
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import joinedload
+
 from app.models.subscription import Subscription
 from app.models.tariff import Tariff
 
@@ -37,3 +39,26 @@ class SubscriptionRepository:
         await self.session.commit()
         await self.session.refresh(new_subscription)
         return new_subscription
+
+    async def deactivate_subscription(self, subscription_id: uuid.UUID | str):
+        if isinstance(subscription_id, str):
+            subscription_id = uuid.UUID(subscription_id)
+
+        await self.session.execute(
+            update(Subscription)
+            .where(Subscription.id == subscription_id)
+            .values(is_active=False)
+        )
+        await self.session.commit()
+
+    async def get_active_subscription_by_user_id(self, user_id: uuid.UUID) -> Subscription | None:
+        query = (
+            select(Subscription)
+            .options(joinedload(Subscription.tariff))
+            .where(
+                Subscription.user_id == user_id,
+                Subscription.is_active == True
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()
