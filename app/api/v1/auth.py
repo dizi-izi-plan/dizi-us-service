@@ -12,7 +12,7 @@ from app.schema.auth import (
 )
 from app.service.user import UserService
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+router = APIRouter()
 
 
 @router.post("/register", response_model=RegisterOut)
