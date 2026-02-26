@@ -39,17 +39,15 @@ async def confirm_email_task(email: EmailStr):
                 if subscription:
                     logger.info(f"V1: Free subscription assigned to {email}")
 
-                    delay_seconds = int(
-                        (subscription.end_date - subscription.start_date).total_seconds()
-                    )
+                    # Расчет интервала и планирование деактивации
+                    delta = subscription.end_date - subscription.start_date
+                    delay = int(delta.total_seconds())
 
                     await deactivate_subscription_task.kiq(
                         str(subscription.id)
-                    ).send_with_delay(delay=delay_seconds)
+                    ).send_with_delay(delay=delay)
 
-                    logger.info(
-                        f"V1: Deactivation scheduled in {delay_seconds}s for sub {subscription.id}"
-                    )
+                    logger.info(f"V1: Deactivation: {delay}s | ID: {subscription.id}")
 
                     await mail_service.send_subscription_activation(
                         recipient=email,
@@ -87,12 +85,15 @@ async def confirm_email_task_v2(user_id: str):
             if subscription:
                 logger.info(f"V2: Free subscription assigned to User {user_id}")
 
-                # Планируем автоматическую деактивацию подписки
-                delay_seconds = int((subscription.end_date - subscription.start_date).total_seconds())
-                await deactivate_subscription_task.kiq(str(subscription.id)).send_with_delay(
-                    delay=delay_seconds
-                )
-                logger.info(f"V2: Deactivation task scheduled in {delay_seconds}s for sub {subscription.id}")
+                # Планирование деактивации подписки
+                delta = subscription.end_date - subscription.start_date
+                delay = int(delta.total_seconds())
+
+                await deactivate_subscription_task.kiq(
+                    str(subscription.id)
+                ).send_with_delay(delay=delay)
+
+                logger.info(f"V2: Deactivation: {delay}s | ID: {subscription.id}")
 
                 user = await user_repo.get_by_id(user_uuid)
                 if user and user.email:
@@ -108,11 +109,11 @@ async def confirm_email_task_v2(user_id: str):
 
 
 @broker.task(task_name="deactivate_subscription_task")
-async def deactivate_subscription_task(subscription_id: str):
+async def deactivate_subscription_task(sub_id: str):
     async with new_session() as session:
         sub_repo = SubscriptionRepository(session)
 
-        if await sub_repo.deactivate_subscription(subscription_id):
-            logger.info(f"Subscription {subscription_id} has been deactivated by timeout")
+        if await sub_repo.deactivate_subscription(sub_id):
+            logger.info(f"Subscription {sub_id} has been deactivated by timeout")
         else:
-            logger.warning(f"Subscription {subscription_id} not found or already inactive")
+            logger.warning(f"Subscription {sub_id} not found or already inactive")

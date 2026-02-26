@@ -51,13 +51,16 @@ class SubscriptionRepository:
         )
         await self.session.commit()
 
-    async def get_active_subscription_by_user_id(self, user_id: uuid.UUID) -> Subscription | None:
+    async def get_active_subscription_by_user_id(
+        self,
+        user_id: uuid.UUID
+    ) -> Subscription | None:
         query = (
             select(Subscription)
             .options(joinedload(Subscription.tariff))
             .where(
                 Subscription.user_id == user_id,
-                Subscription.is_active == True
+                Subscription.is_active
             )
         )
         result = await self.session.execute(query)
