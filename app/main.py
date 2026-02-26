@@ -6,12 +6,13 @@ from fastapi.responses import RedirectResponse
 from starlette.responses import JSONResponse
 
 from app.api.v1 import v1_router
-from app.api.v2.auth import v2_router
+from app.api.v2 import v2_router
 from app.core.error import AppBaseError
-from app.core.logger import logger, setup_logging
+from app.core.logger import setup_logging, get_logger
 from app.core.redis_conf import broker, redis_service
 
 setup_logging()
+logger = get_logger(__name__)
 
 
 @asynccontextmanager

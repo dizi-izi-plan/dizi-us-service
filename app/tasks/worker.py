@@ -3,11 +3,13 @@ import uuid
 from pydantic import EmailStr
 
 from app.core.redis_conf import broker, redis_service
-from app.core.logger import logger
+from app.core.logger import get_logger
 from app.core.security import create_verification_token
 from app.database.db import new_session
 from app.repo.user import UserRepository
 from app.service.mail import mail_service
+
+logger = get_logger(__name__)
 
 
 @broker.task(task_name="send_verification_email")

@@ -2,7 +2,8 @@ from app.core.security import (
     hash_password,
     verify_password,
     create_token_pair,
-    decode_refresh_token, decode_verification_token
+    decode_refresh_token,
+    decode_verification_token
 )
 from app.models.user import User
 from app.schema.auth import (
@@ -17,11 +18,14 @@ from app.schema.auth import (
 from app.core.error import (
     UserAlreadyExistsError,
     InvalidCredentialsError,
-    InvalidVerificationCodeError, InvalidTokenError
+    InvalidVerificationCodeError,
+    InvalidTokenError
 )
 from app.tasks.worker import (
     send_verification_email,
-    confirm_email_task, confirm_email_task_v2, send_verification_email_v2
+    confirm_email_task,
+    confirm_email_task_v2,
+    send_verification_email_v2
 )
 from app.core.redis_conf import redis_service
 
