@@ -25,7 +25,13 @@ class User(Base):
 
     hash_password: Mapped[str] = mapped_column(
         String(255),
-        nullable=False
+        nullable=True
+    )
+
+    google_id: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True
     )
 
     city: Mapped[Optional[str]] = mapped_column(

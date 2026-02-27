@@ -2,6 +2,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
+class GoogleConfig(BaseSettings):
+    client_id: str
+    client_secret: str
+    redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+    token_url: str = "https://oauth2.googleapis.com/token"
+
+
 class DatabaseConfig(BaseSettings):
     host: str = "localhost"
     port: int = 5432
@@ -64,6 +71,7 @@ class Settings(BaseSettings):
     mail: MailConfig
     jwt: JwtConfig
     api: ApiConfig = Field(default_factory=ApiConfig)
+    google: GoogleConfig
 
     model_config = SettingsConfigDict(
         env_file=".env",

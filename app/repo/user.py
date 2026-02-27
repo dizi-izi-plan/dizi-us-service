@@ -5,6 +5,8 @@ from sqlalchemy import select
 from app.models.user import User
 from pydantic import EmailStr
 
+from app.schema.auth import GoogleUserSchema
+
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
@@ -48,3 +50,41 @@ class UserRepository:
             await self.session.commit()
             return True
         return False
+
+    async def get_by_google_id(self, google_id: str) -> User | None:
+        result = await self.session.execute(
+            select(User).where(User.google_id == google_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def create_google_user(
+        self,
+        email: str,
+        google_id: str,
+        confirmed: bool
+    ) -> User:
+        user = User(
+            email=email,
+            google_id=google_id,
+            confirmed=confirmed,
+            hash_password=None
+        )
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
+
+    async def create_via_google(
+        self,
+        google_data: GoogleUserSchema
+    ) -> User:
+        user = User(
+            email=google_data.email,
+            google_id=google_data.sub,
+            confirmed=google_data.email_verified,
+            hash_password=None
+        )
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
