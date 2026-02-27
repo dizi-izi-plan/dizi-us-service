@@ -1,12 +1,14 @@
 import aiohttp
 from urllib.parse import urlencode
+import jwt
+from jwt import PyJWKClient
 from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
 
 from app.core.config import settings
 from app.core.error import ExternalAuthError
 from app.core.security import create_token_pair
-from app.schema.auth import GoogleUserSchema, LoginOut
+from app.schema.auth import LoginOut, AuthUserSchema
 
 
 class AuthService:
@@ -23,7 +25,6 @@ class AuthService:
             "access_type": "offline",
             "prompt": "select_account",
         }
-
         base_url = "https://accounts.google.com/o/oauth2/v2/auth"
         return f"{base_url}?{urlencode(params)}"
 
@@ -31,7 +32,6 @@ class AuthService:
         google_data = await self._fetch_google_user(code)
 
         user = await self.repo.get_by_google_id(google_data.sub)
-
         if not user:
             user = await self.repo.get_by_email(google_data.email)
             if user:
@@ -43,23 +43,18 @@ class AuthService:
         return create_token_pair(str(user.id))
 
     @staticmethod
-    async def _fetch_google_user(code: str) -> GoogleUserSchema:
+    async def _fetch_google_user(code: str) -> AuthUserSchema:
         async with aiohttp.ClientSession() as session:
-            token_payload = {
+            payload = {
                 "client_id": settings.google.client_id,
                 "client_secret": settings.google.client_secret,
                 "code": code,
                 "grant_type": "authorization_code",
                 "redirect_uri": settings.google.redirect_uri,
             }
-
-            async with session.post(
-                url=settings.google.token_url,
-                data=token_payload
-            ) as resp:
+            async with session.post(settings.google.token_url, data=payload) as resp:
                 if resp.status != 200:
                     raise ExternalAuthError()
-
                 tokens = await resp.json()
 
         id_token_raw = tokens.get("id_token")
@@ -73,14 +68,16 @@ class AuthService:
             settings.google.client_id,
         )
 
-        issuer = id_info.get("iss")
-        if issuer not in ("accounts.google.com", "https://accounts.google.com"):
+        if id_info.get("iss") not in (
+            "accounts.google.com",
+            "https://accounts.google.com",
+        ):
             raise ExternalAuthError()
 
-        return GoogleUserSchema(
+        return AuthUserSchema(
             email=id_info["email"],
-            sub=str(id_info["sub"]),
-            email_verified=bool(id_info.get("email_verified", False)),
+            sub=id_info["sub"],
+            email_verified=id_info.get("email_verified", False),
         )
 
     @staticmethod
@@ -110,23 +107,33 @@ class AuthService:
         if not id_token_raw:
             raise ExternalAuthError()
 
-        request_adapter = google_requests.Request()
-        id_info = id_token.verify_oauth2_token(
-            id_token_raw,
-            request_adapter,
-            settings.yandex.client_id,
+        jwks_url = "https://login.yandex.ru/.well-known/jwks.json"
+        jwks_client = PyJWKClient(jwks_url)
+        signing_key = jwks_client.get_signing_key_from_jwt(id_token_raw).key
+
+        try:
+            id_info = jwt.decode(
+                id_token_raw,
+                signing_key,
+                algorithms=["RS256"],
+                audience=settings.yandex.client_id
+            )
+        except jwt.PyJWTError:
+            raise ExternalAuthError()
+
+        yandex_user_data = AuthUserSchema(
+            email=id_info["email"],
+            sub=id_info["sub"],
+            email_verified=id_info.get("email_verified", True)
         )
 
-        email = id_info["email"]
-        sub = id_info["sub"]
-
-        user = await self.repo.get_by_yandex_id(sub)
+        user = await self.repo.get_by_yandex_id(yandex_user_data.sub)
         if not user:
-            user = await self.repo.get_by_email(email)
+            user = await self.repo.get_by_email(yandex_user_data.email)
             if user:
-                user.yandex_id = sub
+                user.yandex_id = yandex_user_data.sub
                 user = await self.repo.save_user(user)
             else:
-                user = await self.repo.create_via_yandex(sub, email)
+                user = await self.repo.create_via_yandex(yandex_user_data)
 
         return create_token_pair(str(user.id))

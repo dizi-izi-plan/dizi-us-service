@@ -34,11 +34,11 @@ class VerifyEmailV2In(BaseModel):
     token: str
 
 
-class GoogleAuthLink(BaseModel):
+class AuthLink(BaseModel):
     url: str
 
 
-class GoogleUserSchema(BaseModel):
+class AuthUserSchema(BaseModel):
     email: EmailStr
     sub: str
     email_verified: bool = False
