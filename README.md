@@ -143,3 +143,12 @@ docker-compose up -d
 **Авторизация через Google (GET /auth/google/callback)** 
 
 - Принимает code от Google после авторизации.
+
+**Авторизация через Yandex (GET /auth/yandex/login)** 
+
+- Возвращает URL авторизации Yandex (OIDC).
+- Клиент делает redirect пользователя на этот URL.
+
+**Авторизация через Yandex (GET /auth/yandex/callback)** 
+
+- Принимает code от Yandex после авторизации.
