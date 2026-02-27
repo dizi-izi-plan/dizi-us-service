@@ -134,3 +134,12 @@ docker-compose up -d
 
 - Получение информации о текущем активном тарифном плане пользователя на основе его access token.
 - Требуется валидный JWT-токен в заголовке Authorization.
+
+**Авторизация через Google (GET /auth/google/login)** 
+
+- Возвращает URL авторизации Google (OIDC).
+- Клиент делает redirect пользователя на этот URL.
+
+**Авторизация через Google (GET /auth/google/callback)** 
+
+- Принимает code от Google после авторизации.
