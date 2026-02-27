@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Depends, Query
 from app.core.dependency import get_auth_service
-from app.schema.auth import GoogleAuthLink, LoginOut
+from app.schema.auth import AuthLink, LoginOut
 from app.service.auth import AuthService
 
 router = APIRouter()
 
 
-@router.get("/login", response_model=GoogleAuthLink)
+@router.get("/login", response_model=AuthLink)
 async def google_login_link(
     service: AuthService = Depends(get_auth_service)
-) -> GoogleAuthLink:
-    return GoogleAuthLink(url=service.get_google_auth_url())
+) -> AuthLink:
+    return AuthLink(url=service.get_google_auth_url())
 
 
 @router.get("/callback", response_model=LoginOut)

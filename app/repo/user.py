@@ -5,7 +5,7 @@ from sqlalchemy import select
 from app.models.user import User
 from pydantic import EmailStr
 
-from app.schema.auth import GoogleUserSchema
+from app.schema.auth import AuthUserSchema
 
 
 class UserRepository:
@@ -57,16 +57,14 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create_google_user(
+    async def create_via_google(
         self,
-        email: str,
-        google_id: str,
-        confirmed: bool
+        google_data: AuthUserSchema
     ) -> User:
         user = User(
-            email=email,
-            google_id=google_id,
-            confirmed=confirmed,
+            email=google_data.email,
+            google_id=google_data.sub,
+            confirmed=google_data.email_verified,
             hash_password=None
         )
         self.session.add(user)
@@ -74,14 +72,20 @@ class UserRepository:
         await self.session.refresh(user)
         return user
 
-    async def create_via_google(
+    async def get_by_yandex_id(self, yandex_id: str) -> User | None:
+        result = await self.session.execute(
+            select(User).where(User.yandex_id == yandex_id)
+        )
+        return result.scalar_one_or_none()
+
+    async def create_via_yandex(
         self,
-        google_data: GoogleUserSchema
+        yandex_data: AuthUserSchema
     ) -> User:
         user = User(
-            email=google_data.email,
-            google_id=google_data.sub,
-            confirmed=google_data.email_verified,
+            email=yandex_data.email,
+            yandex_id=yandex_data.sub,
+            confirmed=yandex_data.email_verified,
             hash_password=None
         )
         self.session.add(user)
