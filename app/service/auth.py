@@ -1,5 +1,8 @@
 import aiohttp
-import urllib.parse
+from urllib.parse import urlencode
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+
 from app.core.config import settings
 from app.core.error import ExternalAuthError
 from app.core.security import create_token_pair
@@ -18,9 +21,11 @@ class AuthService:
             "response_type": "code",
             "scope": "openid email profile",
             "access_type": "offline",
-            "prompt": "select_account"
+            "prompt": "select_account",
         }
-        return f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
+
+        base_url = "https://accounts.google.com/o/oauth2/v2/auth"
+        return f"{base_url}?{urlencode(params)}"
 
     async def authenticate_google(self, code: str) -> LoginOut:
         google_data = await self._fetch_google_user(code)
@@ -48,25 +53,32 @@ class AuthService:
                 "redirect_uri": settings.google.redirect_uri,
             }
 
-            async with session.post(settings.google.token_url, data=token_payload) as resp:
+            async with session.post(
+                url=settings.google.token_url,
+                data=token_payload
+            ) as resp:
                 if resp.status != 200:
-                    error_text = await resp.text()
-                    print(f"[Google Auth Error] Token Exchange: {resp.status} - {error_text}")
                     raise ExternalAuthError()
 
                 tokens = await resp.json()
 
-            headers = {"Authorization": f"Bearer {tokens['access_token']}"}
-            async with session.get(settings.google.userinfo_url, headers=headers) as resp:
-                if resp.status != 200:
-                    error_text = await resp.text()
-                    print(f"[Google Auth Error] User Info: {resp.status} - {error_text}")
-                    raise ExternalAuthError()
+        id_token_raw = tokens.get("id_token")
+        if not id_token_raw:
+            raise ExternalAuthError()
 
-                user_info = await resp.json()
+        request_adapter = google_requests.Request()
+        id_info = id_token.verify_oauth2_token(
+            id_token_raw,
+            request_adapter,
+            settings.google.client_id,
+        )
 
-            return GoogleUserSchema(
-                email=user_info.get("email"),
-                sub=str(user_info.get("id") or user_info.get("sub")),
-                email_verified=user_info.get("verified_email") or user_info.get("email_verified", False)
-            )
+        issuer = id_info.get("iss")
+        if issuer not in ("accounts.google.com", "https://accounts.google.com"):
+            raise ExternalAuthError()
+
+        return GoogleUserSchema(
+            email=id_info["email"],
+            sub=str(id_info["sub"]),
+            email_verified=bool(id_info.get("email_verified", False)),
+        )

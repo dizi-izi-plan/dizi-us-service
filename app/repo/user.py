@@ -57,7 +57,12 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create_google_user(self, email: str, google_id: str, confirmed: bool) -> User:
+    async def create_google_user(
+        self,
+        email: str,
+        google_id: str,
+        confirmed: bool
+    ) -> User:
         user = User(
             email=email,
             google_id=google_id,
@@ -69,7 +74,10 @@ class UserRepository:
         await self.session.refresh(user)
         return user
 
-    async def create_via_google(self, google_data: GoogleUserSchema) -> User:
+    async def create_via_google(
+        self,
+        google_data: GoogleUserSchema
+    ) -> User:
         user = User(
             email=google_data.email,
             google_id=google_data.sub,

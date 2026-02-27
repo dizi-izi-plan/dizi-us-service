@@ -52,16 +52,11 @@ async def google_login_link(
 
 @router.get("/google/callback", response_model=LoginOut)
 async def google_callback(
-        code: Optional[str] = Query(None),
-        error: Optional[str] = Query(None),
-        service: AuthService = Depends(get_auth_service)
+    code: Optional[str] = Query(None),
+    service: AuthService = Depends(get_auth_service)
 ) -> LoginOut:
-    if error:
-        print(f"error: {error}")
-        raise ExternalAuthError()
     if not code:
         raise ExternalAuthError()
-
     return await service.authenticate_google(code)
 
 

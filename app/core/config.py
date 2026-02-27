@@ -7,7 +7,6 @@ class GoogleConfig(BaseSettings):
     client_secret: str
     redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
     token_url: str = "https://oauth2.googleapis.com/token"
-    userinfo_url: str = "https://www.googleapis.com/oauth2/v2/userinfo"
 
 
 class DatabaseConfig(BaseSettings):
