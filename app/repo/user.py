@@ -57,23 +57,6 @@ class UserRepository:
         )
         return result.scalar_one_or_none()
 
-    async def create_google_user(
-        self,
-        email: str,
-        google_id: str,
-        confirmed: bool
-    ) -> User:
-        user = User(
-            email=email,
-            google_id=google_id,
-            confirmed=confirmed,
-            hash_password=None
-        )
-        self.session.add(user)
-        await self.session.commit()
-        await self.session.refresh(user)
-        return user
-
     async def create_via_google(
         self,
         google_data: AuthUserSchema
@@ -88,6 +71,12 @@ class UserRepository:
         await self.session.commit()
         await self.session.refresh(user)
         return user
+
+    async def get_by_yandex_id(self, yandex_id: str) -> User | None:
+        result = await self.session.execute(
+            select(User).where(User.yandex_id == yandex_id)
+        )
+        return result.scalar_one_or_none()
 
     async def create_via_yandex(
         self,

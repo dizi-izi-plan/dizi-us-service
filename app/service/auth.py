@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.core.error import ExternalAuthError
 from app.core.security import create_token_pair
 from app.schema.auth import LoginOut, AuthUserSchema
+from app.tasks.worker import confirm_email_task_v2
 
 
 class AuthService:
@@ -39,6 +40,7 @@ class AuthService:
                 user = await self.repo.save_user(user)
             else:
                 user = await self.repo.create_via_google(google_data)
+                await confirm_email_task_v2.kiq(str(user.id)).send()
 
         return create_token_pair(str(user.id))
 
@@ -135,5 +137,6 @@ class AuthService:
                 user = await self.repo.save_user(user)
             else:
                 user = await self.repo.create_via_yandex(yandex_user_data)
+                await confirm_email_task_v2.kiq(str(user.id)).send()
 
         return create_token_pair(str(user.id))
