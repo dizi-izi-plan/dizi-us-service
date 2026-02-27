@@ -2,6 +2,13 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
+class YandexSettings(BaseSettings):
+    client_id: str
+    client_secret: str
+    redirect_uri: str
+    token_url: str = "https://oauth.yandex.com/token"
+
+
 class GoogleConfig(BaseSettings):
     client_id: str
     client_secret: str
@@ -72,6 +79,7 @@ class Settings(BaseSettings):
     jwt: JwtConfig
     api: ApiConfig = Field(default_factory=ApiConfig)
     google: GoogleConfig
+    yandex: YandexSettings
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -34,6 +34,12 @@ class User(Base):
         nullable=True
     )
 
+    yandex_id: Mapped[Optional[str]] = mapped_column(
+        String(255),
+        unique=True,
+        nullable=True
+    )
+
     city: Mapped[Optional[str]] = mapped_column(
         String(100),
         nullable=True

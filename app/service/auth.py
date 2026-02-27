@@ -82,3 +82,51 @@ class AuthService:
             sub=str(id_info["sub"]),
             email_verified=bool(id_info.get("email_verified", False)),
         )
+
+    @staticmethod
+    def get_yandex_auth_url() -> str:
+        params = {
+            "response_type": "code",
+            "client_id": settings.yandex.client_id,
+            "redirect_uri": settings.yandex.redirect_uri,
+        }
+        base_url = "https://oauth.yandex.com/authorize"
+        return f"{base_url}?{urlencode(params)}"
+
+    async def authenticate_yandex(self, code: str) -> LoginOut:
+        async with aiohttp.ClientSession() as session:
+            payload = {
+                "grant_type": "authorization_code",
+                "code": code,
+                "client_id": settings.yandex.client_id,
+                "client_secret": settings.yandex.client_secret,
+            }
+            async with session.post(settings.yandex.token_url, data=payload) as resp:
+                if resp.status != 200:
+                    raise ExternalAuthError()
+                tokens = await resp.json()
+
+        id_token_raw = tokens.get("id_token")
+        if not id_token_raw:
+            raise ExternalAuthError()
+
+        request_adapter = google_requests.Request()
+        id_info = id_token.verify_oauth2_token(
+            id_token_raw,
+            request_adapter,
+            settings.yandex.client_id,
+        )
+
+        email = id_info["email"]
+        sub = id_info["sub"]
+
+        user = await self.repo.get_by_yandex_id(sub)
+        if not user:
+            user = await self.repo.get_by_email(email)
+            if user:
+                user.yandex_id = sub
+                user = await self.repo.save_user(user)
+            else:
+                user = await self.repo.create_via_yandex(sub, email)
+
+        return create_token_pair(str(user.id))
