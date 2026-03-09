@@ -209,8 +209,7 @@ Request Body
   "token_type": "Bearer"
 }
 ```
-
-### 1.8 Обновление пароля (вводятся старый и новый)
+### 1.7 Смена пароля (вводятся старый и новый)
 POST (http://localhost:8000/api/v1/auth/password-change)
 
 Request Body
@@ -220,11 +219,42 @@ Request Body
   "new_password": "NewPas@2sword"
 }
 ```
-
 Ответ
 ```json
 {
-    "detail": "Пароль успешно изменен"
+  "detail": "Пароль успешно изменен"
+}
+```
+
+### 1.8 Восстановление пароля по почте (отправка письма с токеном)
+POST (http://localhost:8000/api/v1/auth/password-reset/request)
+
+Request Body
+```json
+{
+  "email": "some@gmail.com"
+}
+```
+Ответ
+```json
+{
+  "detail": "Инструкция по восстановлению пароля отправлена на почту"
+}
+```
+
+### 1.9 Восстановление пароля по почте (подтверждение токена)
+POST (http://localhost:8000/api/v1/auth/password-reset/confirm)
+Request Body
+```
+{
+  "password": "new!PasSword12",
+  "token": "MZsmrboLez2jcVb81ax5zDJrSDhf3J_OX813o_mGoqA"
+}
+```
+Ответ
+```json
+{
+  "detail": "Пароль успешно обновлен"
 }
 ```
 

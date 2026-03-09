@@ -1,4 +1,7 @@
 import uuid
+import secrets
+from hashlib import sha256
+from pydantic import EmailStr
 
 from app.core.security import (
     hash_password,
@@ -24,6 +27,7 @@ from app.core.error import (
     InvalidVerificationCodeError,
     InvalidTokenError
 )
+from app.service.mail import mail_service
 from app.tasks.worker import (
     send_verification_email,
     confirm_email_task,
@@ -133,3 +137,30 @@ class UserService:
         await self.repo.update_password(user.id, hashed_password)
 
         return {"detail": "Пароль успешно изменен"}
+
+    async def request_password_reset(self, email: EmailStr):
+        user = await self.repo.get_by_email(email)
+        if not user:
+            return
+
+        raw_token = secrets.token_urlsafe(32)
+        token_hash = sha256(raw_token.encode()).hexdigest()
+
+        await redis_service.set(f"pwd_reset:{token_hash}", str(user.id), expire=1200)
+
+        reset_url = f"http://localhost/reset?token={raw_token}"
+
+        await mail_service.send_password_reset_link(user.email, reset_url)
+
+    async def confirm_password_reset(self, token: str, new_password: str):
+        token_hash = sha256(token.encode()).hexdigest()
+        user_id = await redis_service.get(f"pwd_reset:{token_hash}")
+
+        if not user_id:
+            raise InvalidTokenError("Неверный или просроченный токен")
+
+        hashed_password = hash_password(new_password)
+
+        await self.repo.update_password(user_id, hashed_password)
+
+        await redis_service.delete(f"pwd_reset:{token_hash}")

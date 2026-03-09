@@ -68,5 +68,19 @@ class MailService:
 
         await self._send_mail(message, recipient)
 
+    async def send_password_reset_link(self, recipient: str, url: str):
+        message = email.message.EmailMessage()
+        message["From"] = settings.mail.username
+        message["To"] = recipient
+        message["Subject"] = "Восстановление пароля"
+        message.set_content(
+            f"Здравствуйте!\n\n"
+            f"Для сброса пароля перейдите по ссылке:\n{url}\n\n"
+            f"Если вы не запрашивали восстановление пароля, "
+            f"просто проигнорируйте это письмо."
+        )
+
+        await self._send_mail(message, recipient)
+
 
 mail_service = MailService()
