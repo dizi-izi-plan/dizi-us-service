@@ -24,6 +24,19 @@ class PasswordMixin(BaseModel):
         return value
 
 
+class PasswordChangeIn(BaseModel):
+    old_password: str = Field(min_length=8, max_length=128)
+    new_password: str = Field(min_length=8, max_length=128)
+
+    @field_validator("old_password", "new_password")
+    def validate_password(cls, value: str) -> str:
+        if not re.search(r"[A-Z]", value):
+            raise ValueError("Пароль должен содержать хотя бы одну заглавную букву")
+        if not re.search(r"\d", value):
+            raise ValueError("Пароль должен содержать хотя бы одну цифру")
+        return value
+
+
 class CodeMixin(BaseModel):
     code: str = Field(min_length=5)
 

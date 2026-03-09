@@ -1,3 +1,5 @@
+import uuid
+
 from app.core.security import (
     hash_password,
     verify_password,
@@ -112,3 +114,22 @@ class UserService:
             raise InvalidCredentialsError()
 
         return create_token_pair(str(user.id))
+
+    async def change_password(
+        self,
+        user_id: uuid.UUID,
+        old_password: str,
+        new_password: str
+    ):
+        user = await self.repo.get_by_id(user_id)
+        if not user:
+            raise InvalidCredentialsError("Пользователь не найден")
+
+        if not verify_password(old_password, user.hash_password):
+            raise InvalidCredentialsError("Старый пароль неверный")
+
+        hashed_password = hash_password(new_password)
+
+        await self.repo.update_password(user.id, hashed_password)
+
+        return {"detail": "Пароль успешно изменен"}

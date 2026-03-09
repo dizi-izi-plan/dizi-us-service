@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.core.dependency import get_user_service
+from app.core.security import get_current_user
 from app.schema.auth import (
     RegisterOut,
     RegisterIn,
@@ -10,6 +11,7 @@ from app.schema.auth import (
     VerifyEmailOut,
     RefreshIn
 )
+from app.schema.mixin import PasswordChangeIn, UserIdMixin
 from app.service.user import UserService
 
 router = APIRouter()
@@ -45,3 +47,16 @@ async def refresh(
     service: UserService = Depends(get_user_service)
 ) -> LoginOut:
     return await service.refresh_tokens(payload)
+
+
+@router.post("/password-change")
+async def password_change(
+    payload: PasswordChangeIn,
+    current_user: UserIdMixin = Depends(get_current_user),
+    service: UserService = Depends(get_user_service)
+):
+    return await service.change_password(
+        user_id=current_user.id,
+        old_password=payload.old_password,
+        new_password=payload.new_password
+    )
