@@ -210,6 +210,24 @@ Request Body
 }
 ```
 
+### 1.8 Обновление пароля (вводятся старый и новый)
+POST (http://localhost:8000/api/v1/auth/password-change)
+
+Request Body
+```json
+{
+  "old_password": "OldPass234!Word",
+  "new_password": "NewPas@2sword"
+}
+```
+
+Ответ
+```json
+{
+    "detail": "Пароль успешно изменен"
+}
+```
+
 ## 2. OAuth авторизация
 
 ### 2.1 Google
