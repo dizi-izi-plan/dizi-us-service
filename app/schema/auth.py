@@ -42,3 +42,11 @@ class AuthUserSchema(BaseModel):
     email: EmailStr
     sub: str
     email_verified: bool = False
+
+
+class PasswordResetRequestIn(BaseModel):
+    email: EmailStr
+
+
+class PasswordResetConfirmIn(PasswordMixin):
+    token: str

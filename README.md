@@ -210,6 +210,41 @@ Request Body
 }
 ```
 
+### 1.7 Востановление пароля по почте (отправка письма с токеном)
+POST (http://localhost:8000/api/v1/auth/password-reset/request)
+
+Request Body
+```json
+{
+  "email": "some@gmail.com"
+}
+```
+
+Ответ
+```json
+{
+  "detail": "Инструкция по восстановлению пароля отправлена на почту"
+}
+```
+
+### 1.8 Востановление пароля по почте
+POST (http://localhost:8000/api/v1/auth/password-reset/confirm)
+
+Request Body
+```json
+{
+  "password": "new!PasSword12",
+  "token": "MZsmrboLez2jcVb81ax5zDJrSDhf3J_OX813o_mGoqA"
+}
+```
+
+Ответ
+```json
+{
+  "detail": "Пароль успешно обновлен"
+}
+```
+
 ## 2. OAuth авторизация
 
 ### 2.1 Google

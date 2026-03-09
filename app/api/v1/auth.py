@@ -8,7 +8,7 @@ from app.schema.auth import (
     LoginOut,
     VerifyEmailIn,
     VerifyEmailOut,
-    RefreshIn
+    RefreshIn, PasswordResetRequestIn, PasswordResetConfirmIn
 )
 from app.service.user import UserService
 
@@ -45,3 +45,21 @@ async def refresh(
     service: UserService = Depends(get_user_service)
 ) -> LoginOut:
     return await service.refresh_tokens(payload)
+
+
+@router.post("/password-reset/request")
+async def password_reset_request(
+    payload: PasswordResetRequestIn,
+    service: UserService = Depends(get_user_service)
+):
+    await service.request_password_reset(payload.email)
+    return {"detail": "Инструкция по восстановлению пароля отправлена на почту"}
+
+
+@router.post("/password-reset/confirm")
+async def password_reset_confirm(
+    payload: PasswordResetConfirmIn,
+    service: UserService = Depends(get_user_service)
+):
+    await service.confirm_password_reset(payload.token, payload.password)
+    return {"detail": "Пароль успешно обновлен"}
