@@ -97,6 +97,5 @@ class UserRepository:
         user = await self.get_by_id(user_id)
         if not user:
             return None
-          
         user.hash_password = hashed_password
         return await self.save_user(user)
