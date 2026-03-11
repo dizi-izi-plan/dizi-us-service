@@ -61,7 +61,7 @@ async def password_change(
         new_password=payload.new_password
     )
 
-  
+
 @router.post("/password-reset/request")
 async def password_reset_request(
     payload: PasswordResetRequestIn,
