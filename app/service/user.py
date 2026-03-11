@@ -52,8 +52,8 @@ class UserService:
             hash_password=hash_password(data.password)
         )
 
-        user = await self.repo.save_user(user)
-        await send_verification_email.kiq(data.email, user.id)
+        await self.repo.save_user(user)
+        await send_verification_email.kiq(data.email)
 
         return RegisterOut()
 
