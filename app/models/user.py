@@ -72,3 +72,9 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan"
     )
+
+    is_admin: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )

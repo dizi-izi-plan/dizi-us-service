@@ -164,3 +164,33 @@ class UserService:
         await self.repo.update_password(user_id, hashed_password)
 
         await redis_service.delete(f"pwd_reset:{token_hash}")
+
+    async def set_admin_status(self, user_id: uuid.UUID, is_admin: bool, ttl: int) -> dict:
+        user = await self.repo.get_by_id(user_id)
+        if not user:
+            raise InvalidCredentialsError("Пользователь не найден")
+
+        key = f"is_admin:{user_id}"
+        await redis_service.set(key, str(is_admin), expire=ttl)
+        return {key: str(is_admin)}
+
+    async def get_admin_status(self, user_id: uuid.UUID) -> bool:
+        key = f"is_admin:{user_id}"
+        cached = await redis_service.get(key)
+
+        if cached is not None:
+            return cached.lower() == "true"
+
+        user = await self.repo.get_by_id(user_id)
+        if not user:
+            raise InvalidCredentialsError("Пользователь не найден")
+
+        is_admin = user.is_admin
+
+        await redis_service.set(key, str(is_admin))
+        return is_admin
+
+    async def invalidate_admin_cache(self, user_id: uuid.UUID) -> dict:
+        key = f"is_admin:{user_id}"
+        await redis_service.delete(key)
+        return {"detail": "Ключ успешно удалён"}
