@@ -25,7 +25,7 @@ from app.core.error import (
     UserAlreadyExistsError,
     InvalidCredentialsError,
     InvalidVerificationCodeError,
-    InvalidTokenError
+    InvalidTokenError,
 )
 from app.service.mail import mail_service
 from app.tasks.worker import (
@@ -141,7 +141,7 @@ class UserService:
     async def request_password_reset(self, email: EmailStr):
         user = await self.repo.get_by_email(email)
         if not user:
-            return
+            raise InvalidCredentialsError("Пользователь не найден")
 
         raw_token = secrets.token_urlsafe(32)
         token_hash = sha256(raw_token.encode()).hexdigest()

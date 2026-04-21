@@ -78,36 +78,3 @@ async def password_reset_confirm(
 ):
     await service.confirm_password_reset(payload.token, payload.password)
     return {"detail": "Пароль успешно обновлен"}
-
-
-""" Временные эндпоинты для ручного тестирования is_admin методов """
-import uuid
-from typing import Dict, Any
-
-@router.get("/me")
-async def get_my_id(current_user: UserIdMixin = Depends(get_current_user)):
-    return {"user_id": current_user.id}
-
-@router.get("/is_admin/{user_id}")
-async def get_admin_status(
-    user_id: uuid.UUID,
-    service: UserService = Depends(get_user_service)
-):
-    is_admin = await service.get_admin_status(user_id)
-    return {"is_admin": is_admin}
-
-@router.post("/set_admin_status")
-async def set_admin_status(
-    payload: Dict[str, Any],
-    service: UserService = Depends(get_user_service)
-):
-    user_admin_status = await service.set_admin_status(payload["user_id"], payload["is_admin"], payload["ttl"])
-    return user_admin_status
-
-@router.post("/invalidate_admin_cache")
-async def invalidate_admin_cache(
-    payload: Dict[str, uuid.UUID],
-    service: UserService = Depends(get_user_service)
-):
-    deleted = await service.invalidate_admin_cache(payload["user_id"])
-    return deleted
