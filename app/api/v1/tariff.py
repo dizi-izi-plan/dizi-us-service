@@ -9,10 +9,11 @@ from app.service.tariff import TariffService
 router = APIRouter()
 
 
-@router.post("/", 
-             response_model=TariffRead, 
-             status_code=status.HTTP_201_CREATED,
-             dependencies=[Depends(admin_required)])
+@router.post(
+    "/",
+    response_model=TariffRead,
+    status_code=status.HTTP_201_CREATED,
+    dependencies=[Depends(admin_required)])
 async def create_tariff(
     payload: TariffCreate,
     service: TariffService = Depends(get_tariff_service)
@@ -35,9 +36,10 @@ async def get_tariff(
     return await service.get_tariff_by_id(tariff_id)
 
 
-@router.patch("/{tariff_id}", 
-              response_model=TariffRead,
-              dependencies=[Depends(admin_required)])
+@router.patch(
+    "/{tariff_id}",
+    response_model=TariffRead,
+    dependencies=[Depends(admin_required)])
 async def update_tariff(
     tariff_id: UUID,
     payload: TariffUpdate,
@@ -46,9 +48,10 @@ async def update_tariff(
     return await service.update_tariff(tariff_id, payload)
 
 
-@router.delete("/{tariff_id}", 
-               status_code=status.HTTP_204_NO_CONTENT,
-               dependencies=[Depends(admin_required)])
+@router.delete(
+    "/{tariff_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(admin_required)])
 async def delete_tariff(
     tariff_id: UUID,
     service: TariffService = Depends(get_tariff_service)

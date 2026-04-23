@@ -3,6 +3,7 @@ import secrets
 from hashlib import sha256
 from pydantic import EmailStr
 
+from app.core.logger import get_logger
 from app.core.security import (
     hash_password,
     verify_password,
@@ -35,6 +36,8 @@ from app.tasks.worker import (
     send_verification_email_v2
 )
 from app.core.redis_conf import redis_service
+
+logger = get_logger(__name__)
 
 
 class UserService:
@@ -141,7 +144,7 @@ class UserService:
     async def request_password_reset(self, email: EmailStr):
         user = await self.repo.get_by_email(email)
         if not user:
-            raise InvalidCredentialsError("Пользователь не найден")
+            return
 
         raw_token = secrets.token_urlsafe(32)
         token_hash = sha256(raw_token.encode()).hexdigest()
@@ -165,32 +168,32 @@ class UserService:
 
         await redis_service.delete(f"pwd_reset:{token_hash}")
 
-    async def set_admin_status(self, user_id: uuid.UUID, is_admin: bool, ttl: int) -> dict:
-        user = await self.repo.get_by_id(user_id)
-        if not user:
-            raise InvalidCredentialsError("Пользователь не найден")
-
-        key = f"is_admin:{user_id}"
-        await redis_service.set(key, str(is_admin), expire=ttl)
-        return {key: str(is_admin)}
+    @staticmethod
+    async def set_admin_status(user_id: uuid.UUID, is_admin: bool, ttl: int) -> None:
+        key = f"user:is_admin:v1:{user_id}"
+        logger.info(f"Updating admin status for user {user_id} (value: {is_admin})")
+        await redis_service.set(key, is_admin, expire=ttl)
 
     async def get_admin_status(self, user_id: uuid.UUID) -> bool:
-        key = f"is_admin:{user_id}"
-        cached = await redis_service.get(key)
+        key = f"user:is_admin:v1:{user_id}"
 
+        cached = await redis_service.get_typed(key, bool)
         if cached is not None:
-            return cached.lower() == "true"
+            logger.info(f"Cache Hit: Admin status for {user_id} found in Redis")
+            return cached
 
+        logger.info(f"Cache Miss: Fetching admin status for {user_id} from Database")
         user = await self.repo.get_by_id(user_id)
         if not user:
             raise InvalidCredentialsError("Пользователь не найден")
 
         is_admin = user.is_admin
 
-        await redis_service.set(key, str(is_admin))
-        return is_admin
+        logger.info(f"Cache Sync: Saving admin status for {user_id} to Redis")
+        await self.set_admin_status(
+            user_id=user_id,
+            is_admin=is_admin,
+            ttl=600,
+        )
 
-    async def invalidate_admin_cache(self, user_id: uuid.UUID) -> dict:
-        key = f"is_admin:{user_id}"
-        await redis_service.delete(key)
-        return {"detail": "Ключ успешно удалён"}
+        return is_admin
