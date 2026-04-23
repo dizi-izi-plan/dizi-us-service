@@ -45,3 +45,8 @@ class TariffNotFound(AppBaseError):
 class ExternalAuthError(AppBaseError):
     status_code = status.HTTP_400_BAD_REQUEST
     detail = "Ошибка аутентификации через внешний сервис"
+
+
+class PermissionDeniedError(AppBaseError):
+    status_code = status.HTTP_403_FORBIDDEN
+    detail = "Требуются права администратора"
