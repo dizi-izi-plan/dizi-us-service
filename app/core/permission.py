@@ -9,8 +9,6 @@ from app.core.error import PermissionDeniedError
 
 async def admin_required(
     current_user: UserIdMixin = Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
 ) -> None:
-    is_admin = await user_service.get_admin_status(current_user.id)
-    if not is_admin:
+    if not current_user.is_admin:
         raise PermissionDeniedError("Требуются права администратора")

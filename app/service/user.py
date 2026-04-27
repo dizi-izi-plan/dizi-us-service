@@ -106,7 +106,9 @@ class UserService:
         ):
             raise InvalidCredentialsError()
 
-        return create_token_pair(str(user.id))
+        is_admin = await self.get_admin_status(user.id)
+        
+        return create_token_pair(str(user.id), is_admin)
 
     async def refresh_tokens(self, data: RefreshIn) -> LoginOut:
         payload = decode_refresh_token(data.refresh_token)
@@ -120,7 +122,9 @@ class UserService:
         if not user:
             raise InvalidCredentialsError()
 
-        return create_token_pair(str(user.id))
+        is_admin = await self.get_admin_status(user.id)
+        
+        return create_token_pair(str(user.id), is_admin)
 
     async def change_password(
         self,

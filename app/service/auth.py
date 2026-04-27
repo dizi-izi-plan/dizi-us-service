@@ -10,11 +10,13 @@ from app.core.error import ExternalAuthError
 from app.core.security import create_token_pair
 from app.schema.auth import LoginOut, AuthUserSchema
 from app.tasks.worker import confirm_email_task_v2
+from app.service.user import UserService
 
 
 class AuthService:
     def __init__(self, repo):
         self.repo = repo
+        self.user_service = UserService(repo)
 
     @staticmethod
     def get_google_auth_url() -> str:
@@ -42,7 +44,9 @@ class AuthService:
                 user = await self.repo.create_via_google(google_data)
                 await confirm_email_task_v2.kiq(str(user.id)).send()
 
-        return create_token_pair(str(user.id))
+        is_admin = await self.user_service.get_admin_status(user.id)
+        
+        return create_token_pair(str(user.id), is_admin)
 
     @staticmethod
     async def _fetch_google_user(code: str) -> AuthUserSchema:
@@ -139,4 +143,6 @@ class AuthService:
                 user = await self.repo.create_via_yandex(yandex_user_data)
                 await confirm_email_task_v2.kiq(str(user.id)).send()
 
-        return create_token_pair(str(user.id))
+        is_admin = await self.user_service.get_admin_status(user.id)
+        
+        return create_token_pair(str(user.id), is_admin)

@@ -38,9 +38,9 @@ def _create_token(data: dict, expires_delta: timedelta) -> str:
     )
 
 
-def create_access_token(user_id: str) -> str:
+def create_access_token(user_id: str, is_admin: bool) -> str:
     return _create_token(
-        {"sub": user_id, "typ": "access"},
+        {"sub": user_id, "typ": "access", "is_admin": is_admin},
         timedelta(minutes=settings.jwt.access_expire_minutes)
     )
 
@@ -52,9 +52,9 @@ def create_refresh_token(user_id: str) -> str:
     )
 
 
-def create_token_pair(user_id: str) -> LoginOut:
+def create_token_pair(user_id: str, is_admin: bool) -> LoginOut:
     return LoginOut(
-        access_token=create_access_token(user_id),
+        access_token=create_access_token(user_id, is_admin),
         refresh_token=create_refresh_token(user_id),
         token_type="bearer"
     )
@@ -98,6 +98,7 @@ async def get_current_user(
 ) -> UserIdMixin:
     payload = decode_access_token(token)
     user_id = payload.get("sub")
+    is_admin = payload.get("is_admin")
     if not user_id:
         raise InvalidCredentialsError()
 
@@ -106,7 +107,7 @@ async def get_current_user(
     if not user:
         raise InvalidCredentialsError()
 
-    return UserIdMixin(id=user.id)
+    return UserIdMixin(id=user.id, is_admin=is_admin)
 
 
 def create_verification_token(user_id: str) -> str:
