@@ -11,7 +11,7 @@ from app.repo.user import UserRepository
 from app.core.config import settings
 from jose import jwt, JWTError, ExpiredSignatureError
 
-from app.schema.mixin import UserIdMixin
+from app.schema.mixin import UserIdAdminMixin
 from app.core.error import InvalidCredentialsError, InvalidTokenError, TokenExpiredError
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -38,9 +38,9 @@ def _create_token(data: dict, expires_delta: timedelta) -> str:
     )
 
 
-def create_access_token(user_id: str, is_admin: bool) -> str:
+def create_access_token(user_id: str) -> str:
     return _create_token(
-        {"sub": user_id, "typ": "access", "is_admin": is_admin},
+        {"sub": user_id, "typ": "access"},
         timedelta(minutes=settings.jwt.access_expire_minutes)
     )
 
@@ -52,9 +52,9 @@ def create_refresh_token(user_id: str) -> str:
     )
 
 
-def create_token_pair(user_id: str, is_admin: bool) -> LoginOut:
+def create_token_pair(user_id: str) -> LoginOut:
     return LoginOut(
-        access_token=create_access_token(user_id, is_admin),
+        access_token=create_access_token(user_id),
         refresh_token=create_refresh_token(user_id),
         token_type="bearer"
     )
@@ -94,11 +94,10 @@ def decode_refresh_token(token: str) -> dict:
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    session: AsyncSession = Depends(get_session),
-) -> UserIdMixin:
+    session: AsyncSession = Depends(get_session)
+) -> UserIdAdminMixin:
     payload = decode_access_token(token)
     user_id = payload.get("sub")
-    is_admin = payload.get("is_admin")
     if not user_id:
         raise InvalidCredentialsError()
 
@@ -107,7 +106,7 @@ async def get_current_user(
     if not user:
         raise InvalidCredentialsError()
 
-    return UserIdMixin(id=user.id, is_admin=is_admin)
+    return UserIdAdminMixin(id=user.id, is_admin=user.is_admin)
 
 
 def create_verification_token(user_id: str) -> str:

@@ -10,7 +10,14 @@ class EmailMixin(BaseModel):
 
 class UserIdMixin(BaseModel):
     id: uuid.UUID
+
+
+class UserAdminMixin(BaseModel):
     is_admin: bool
+
+
+class UserIdAdminMixin(UserIdMixin, UserAdminMixin):
+    pass
 
 
 class PasswordMixin(BaseModel):

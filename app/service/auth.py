@@ -43,10 +43,8 @@ class AuthService:
             else:
                 user = await self.repo.create_via_google(google_data)
                 await confirm_email_task_v2.kiq(str(user.id)).send()
-
-        is_admin = await self.user_service.get_admin_status(user.id)
         
-        return create_token_pair(str(user.id), is_admin)
+        return create_token_pair(str(user.id))
 
     @staticmethod
     async def _fetch_google_user(code: str) -> AuthUserSchema:
@@ -143,6 +141,4 @@ class AuthService:
                 user = await self.repo.create_via_yandex(yandex_user_data)
                 await confirm_email_task_v2.kiq(str(user.id)).send()
 
-        is_admin = await self.user_service.get_admin_status(user.id)
-        
-        return create_token_pair(str(user.id), is_admin)
+        return create_token_pair(str(user.id))
