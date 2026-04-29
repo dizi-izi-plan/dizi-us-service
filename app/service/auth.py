@@ -10,11 +10,13 @@ from app.core.error import ExternalAuthError
 from app.core.security import create_token_pair
 from app.schema.auth import LoginOut, AuthUserSchema
 from app.tasks.worker import confirm_email_task_v2
+from app.service.user import UserService
 
 
 class AuthService:
     def __init__(self, repo):
         self.repo = repo
+        self.user_service = UserService(repo)
 
     @staticmethod
     def get_google_auth_url() -> str:

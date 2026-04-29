@@ -12,6 +12,14 @@ class UserIdMixin(BaseModel):
     id: uuid.UUID
 
 
+class UserAdminMixin(BaseModel):
+    is_admin: bool
+
+
+class UserIdAdminMixin(UserIdMixin, UserAdminMixin):
+    pass
+
+
 class PasswordMixin(BaseModel):
     password: str = Field(min_length=8, max_length=128)
 

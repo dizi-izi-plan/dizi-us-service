@@ -11,7 +11,7 @@ from app.schema.auth import (
     VerifyEmailOut,
     RefreshIn, PasswordResetRequestIn, PasswordResetConfirmIn
 )
-from app.schema.mixin import PasswordChangeIn, UserIdMixin
+from app.schema.mixin import PasswordChangeIn, UserIdAdminMixin
 from app.service.user import UserService
 
 router = APIRouter()
@@ -52,7 +52,7 @@ async def refresh(
 @router.post("/password-change")
 async def password_change(
     payload: PasswordChangeIn,
-    current_user: UserIdMixin = Depends(get_current_user),
+    current_user: UserIdAdminMixin = Depends(get_current_user),
     service: UserService = Depends(get_user_service)
 ):
     return await service.change_password(
@@ -78,3 +78,10 @@ async def password_reset_confirm(
 ):
     await service.confirm_password_reset(payload.token, payload.password)
     return {"detail": "Пароль успешно обновлен"}
+
+
+@router.get("/me")
+async def get_token_info(
+    current_user: UserIdAdminMixin = Depends(get_current_user)
+):
+    return current_user

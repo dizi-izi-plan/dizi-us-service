@@ -167,33 +167,3 @@ class UserService:
         await self.repo.update_password(user_id, hashed_password)
 
         await redis_service.delete(f"pwd_reset:{token_hash}")
-
-    @staticmethod
-    async def set_admin_status(user_id: uuid.UUID, is_admin: bool, ttl: int) -> None:
-        key = f"user:is_admin:v1:{user_id}"
-        logger.info(f"Updating admin status for user {user_id} (value: {is_admin})")
-        await redis_service.set(key, is_admin, expire=ttl)
-
-    async def get_admin_status(self, user_id: uuid.UUID) -> bool:
-        key = f"user:is_admin:v1:{user_id}"
-
-        cached = await redis_service.get_typed(key, bool)
-        if cached is not None:
-            logger.info(f"Cache Hit: Admin status for {user_id} found in Redis")
-            return cached
-
-        logger.info(f"Cache Miss: Fetching admin status for {user_id} from Database")
-        user = await self.repo.get_by_id(user_id)
-        if not user:
-            raise InvalidCredentialsError("Пользователь не найден")
-
-        is_admin = user.is_admin
-
-        logger.info(f"Cache Sync: Saving admin status for {user_id} to Redis")
-        await self.set_admin_status(
-            user_id=user_id,
-            is_admin=is_admin,
-            ttl=600,
-        )
-
-        return is_admin

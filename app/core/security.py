@@ -11,7 +11,7 @@ from app.repo.user import UserRepository
 from app.core.config import settings
 from jose import jwt, JWTError, ExpiredSignatureError
 
-from app.schema.mixin import UserIdMixin
+from app.schema.mixin import UserIdAdminMixin
 from app.core.error import InvalidCredentialsError, InvalidTokenError, TokenExpiredError
 
 pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
@@ -94,8 +94,8 @@ def decode_refresh_token(token: str) -> dict:
 
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    session: AsyncSession = Depends(get_session),
-) -> UserIdMixin:
+    session: AsyncSession = Depends(get_session)
+) -> UserIdAdminMixin:
     payload = decode_access_token(token)
     user_id = payload.get("sub")
     if not user_id:
@@ -106,7 +106,7 @@ async def get_current_user(
     if not user:
         raise InvalidCredentialsError()
 
-    return UserIdMixin(id=user.id)
+    return UserIdAdminMixin(id=user.id, is_admin=user.is_admin)
 
 
 def create_verification_token(user_id: str) -> str:
