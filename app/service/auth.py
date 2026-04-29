@@ -43,7 +43,7 @@ class AuthService:
             else:
                 user = await self.repo.create_via_google(google_data)
                 await confirm_email_task_v2.kiq(str(user.id)).send()
-        
+
         return create_token_pair(str(user.id))
 
     @staticmethod

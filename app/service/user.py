@@ -105,7 +105,7 @@ class UserService:
             data.password, str(user.hash_password)
         ):
             raise InvalidCredentialsError()
-        
+
         return create_token_pair(str(user.id))
 
     async def refresh_tokens(self, data: RefreshIn) -> LoginOut:
@@ -119,7 +119,7 @@ class UserService:
 
         if not user:
             raise InvalidCredentialsError()
-        
+
         return create_token_pair(str(user.id))
 
     async def change_password(

@@ -78,3 +78,10 @@ async def password_reset_confirm(
 ):
     await service.confirm_password_reset(payload.token, payload.password)
     return {"detail": "Пароль успешно обновлен"}
+
+
+@router.get("/me")
+async def get_token_info(
+    current_user: UserIdAdminMixin = Depends(get_current_user)
+):
+    return current_user
