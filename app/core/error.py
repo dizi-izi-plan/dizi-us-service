@@ -50,3 +50,13 @@ class ExternalAuthError(AppBaseError):
 class PermissionDeniedError(AppBaseError):
     status_code = status.HTTP_403_FORBIDDEN
     detail = "Требуются права администратора"
+
+
+class EmailAlreadyVerifiedError(AppBaseError):
+    status_code = status.HTTP_409_CONFLICT
+    detail = "Верификация уже пройдена"
+
+
+class UserNotFoundError(AppBaseError):
+    status_code = status.HTTP_404_NOT_FOUND
+    detail = "Пользователь с таким email не зарегистрирован"
