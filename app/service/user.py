@@ -76,18 +76,18 @@ class UserService:
         await send_verification_email_v2.kiq(data.email, user.id)
 
         return RegisterOut()
-    
+
     async def resend_code(self, data: RegisterIn) -> RegisterOut:
         user = await self.repo.get_by_email(data.email)
-        
+
         if not user:
             raise UserNotFoundError("Пользователь с таким email не зарегистрирован")
-        
+
         subscription = await self.repo.get_active_subscription_by_user_id(user.id)
-        
+
         if subscription:
-            raise EmailAlreadyVerifiedError("Email уже подтверждён (активная подписка найдена)")
-        
+            raise EmailAlreadyVerifiedError("Email уже подтверждён")
+
         await send_verification_email.kiq(data.email)
 
         return RegisterOut()
