@@ -269,6 +269,24 @@ GET (http://localhost:8000/api/v1/auth/me)
 }
 ```
 
+### 1.11 Повторная отправка письма с кодом на почту
+POST (http://localhost:8000/api/v1/auth/resend-code)
+
+Request Body
+```json
+{
+  "email": "user@example.com",
+  "password": "StrongPass1"
+}
+```
+
+Ответ
+```json
+{
+  "message": "Письмо для подтверждения отправлена на почту"
+}
+```
+
 ## 2. OAuth авторизация
 
 ### 2.1 Google

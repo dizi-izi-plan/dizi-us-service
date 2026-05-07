@@ -2,7 +2,9 @@ import uuid
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import joinedload
 from app.models.user import User
+from app.models.subscription import Subscription
 from pydantic import EmailStr
 
 from app.schema.auth import AuthUserSchema
@@ -99,3 +101,18 @@ class UserRepository:
             return None
         user.hash_password = hashed_password
         return await self.save_user(user)
+
+    async def get_active_subscription_by_user_id(
+        self,
+        user_id: uuid.UUID
+    ) -> Subscription | None:
+        query = (
+            select(Subscription)
+            .options(joinedload(Subscription.tariff))
+            .where(
+                Subscription.user_id == user_id,
+                Subscription.is_active
+            )
+        )
+        result = await self.session.execute(query)
+        return result.scalar_one_or_none()

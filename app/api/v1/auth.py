@@ -25,6 +25,14 @@ async def register(
     return await service.register(payload)
 
 
+@router.post("/resend-code", response_model=RegisterOut)
+async def resend_code(
+    payload: RegisterIn,
+    service: UserService = Depends(get_user_service)
+) -> RegisterOut:
+    return await service.resend_code(payload)
+
+
 @router.post("/verify", response_model=VerifyEmailOut)
 async def verify(
     payload: VerifyEmailIn,
