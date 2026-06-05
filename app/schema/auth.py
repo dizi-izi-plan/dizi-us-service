@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
 from app.schema.mixin import EmailMixin, PasswordMixin, CodeMixin, TokenMixin
+import uuid
 
 
 class RegisterIn(EmailMixin, PasswordMixin):
@@ -50,3 +51,13 @@ class PasswordResetRequestIn(BaseModel):
 
 class PasswordResetConfirmIn(PasswordMixin):
     token: str
+
+
+class UserRead(BaseModel):
+    id: uuid.UUID
+    email: EmailStr
+    first_name: str | None = None
+    last_name: str | None = None
+
+    class Config:
+        from_attributes = True
