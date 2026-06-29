@@ -9,9 +9,10 @@ from app.schema.auth import (
     LoginOut,
     VerifyEmailIn,
     VerifyEmailOut,
-    RefreshIn, PasswordResetRequestIn, PasswordResetConfirmIn
+    RefreshIn, PasswordResetRequestIn, PasswordResetConfirmIn, UserRead
 )
 from app.schema.mixin import PasswordChangeIn, UserIdMixin
+from app.models.user import User
 from app.service.user import UserService
 
 router = APIRouter()
@@ -78,3 +79,12 @@ async def password_reset_confirm(
 ):
     await service.confirm_password_reset(payload.token, payload.password)
     return {"detail": "Пароль успешно обновлен"}
+
+
+@router.get("/users/me", response_model=UserRead)
+async def get_my_data(
+    current_user: UserIdMixin = Depends(get_current_user),
+    service: UserService = Depends(get_user_service)
+) -> UserRead:
+    user = await service.get_user_data(current_user.id)
+    return UserRead.model_validate(user)

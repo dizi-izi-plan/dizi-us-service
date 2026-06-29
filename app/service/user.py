@@ -119,6 +119,10 @@ class UserService:
 
         return create_token_pair(str(user.id))
 
+    async def get_user_data(self, user_id: uuid.UUID) -> User | None:
+        return await self.repo.get_by_id(user_id)
+
+
     async def change_password(
         self,
         user_id: uuid.UUID,
